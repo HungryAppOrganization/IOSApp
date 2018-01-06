@@ -1,0 +1,132 @@
+Important things to know:
+
+  JSON handling in swift
+  This is if I just return a string.
+         print(json)
+        let myList = String(describing: json!["messages"]!)
+        print(myList)
+        if (myList == "test1") {
+            print("It worked")
+        }
+  If it a structure:
+    print("My json is: ")
+    print(json)
+    let myList = json!["messages"]!
+    print(myList)
+    if (myList == "test1") {
+        print("It worked")
+    }
+
+App Todos:
+  ✔ So I now have communicate between the two setup and nicely acounted for. @done (18-01-05 15:37)
+
+  ✔ Next: Addresses (this means I will need to get lat/long), and phone number support. - 30 minutes @done (18-01-05 18:14)
+      I should get this information on server side and send over. Wait but that is too many calls. Call on phone. 
+  ✔ Also current position support and time estimates. 30 minutes @done (18-01-05 18:14)
+
+  ✔ Cleaning Code - 2 hours @done (18-01-06 18:18)
+      Move API keys to a dedicated file. 
+      Done, except for moving API keys. 
+  
+  ☐ if N/A Calories, do not show them. 15 mins
+  ☐ Location of price (Price be in the ccenter)
+  ☐ Number - remove if you do not have it.
+  ☐ Bug with crashing on last scsreen
+  ☐ Rotating phrases for the last screen (just random number and list of strings)
+  ☐ Random flashing of images. 
+  ☐ Last Page something different.
+      
+
+  ✔ Calculate and show miles at the bottom. @done (18-01-05 18:14)
+
+  ☐ Delivery API
+      ☐ Test on our side.
+      ☐ See what can be done with restaurants.
+      ☐ Hook it into it?
+
+  ☐ Financial API Hookin,
+       ☐ Have box pop down (setup this interface)
+       ☐ Send information to the back end.
+       ☐ Create DB for this and charge card.
+       ☐ Charge card (using stripe)
+
+
+
+Starting: Geocode:
+    https://maps.googleapis.com/maps/api/geocode/xml?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=AIzaSyBi7krdji6Ys6sSNSdw2z5FeyCfR1iNimA
+
+    Swift method for it: 
+
+    func getLatLngForZip(zipCode: String) {
+        let baseUrl = "https://maps.googleapis.com/maps/api/geocode/json?"
+        let apikey = "YOUR_API_KEY"
+        let url = NSURL(string: "\(baseUrl)address=\(zipCode)&key=\(apikey)")
+        let data = NSData(contentsOfURL: url!)
+        let json = try! NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.AllowFragments) as! NSDictionary
+        if let result = json["results"] as? NSArray {
+            if let geometry = result[0]["geometry"] as? NSDictionary {
+                if let location = geometry["location"] as? NSDictionary {
+                    let latitude = location["lat"] as! Float
+                    let longitude = location["lng"] as! Float
+                    print("\n\(latitude), \(longitude)")
+                }
+            }
+        }
+    }
+
+
+func getAddressForLatLng(latitude: String, longitude: String) {
+    let url = NSURL(string: "\(baseUrl)latlng=\(latitude),\(longitude)&key=\(apikey)")
+    let data = NSData(contentsOfURL: url!)
+    let json = try! NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.AllowFragments) as! NSDictionary
+    if let result = json["results"] as? NSArray {
+        if let address = result[0]["address_components"] as? NSArray {
+            let number = address[0]["short_name"] as! String
+            let street = address[1]["short_name"] as! String
+            let city = address[2]["short_name"] as! String
+            let state = address[4]["short_name"] as! String
+            let zip = address[6]["short_name"] as! String
+            print("\n\(number) \(street), \(city), \(state) \(zip)")
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

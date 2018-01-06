@@ -1,96 +1,60 @@
 /*
- * Copyright (C) 2015 - 2017, Daniel Dahan and CosmicMind, Inc. <http://cosmicmind.com>.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *	*	Redistributions of source code must retain the above copyright notice, this
- *		list of conditions and the following disclaimer.
- *
- *	*	Redistributions in binary form must reproduce the above copyright notice,
- *		this list of conditions and the following disclaimer in the documentation
- *		and/or other materials provided with the distribution.
- *
- *	*	Neither the name of CosmicMind nor the names of its
- *		contributors may be used to endorse or promote products derived from
- *		this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  #######
+ *  # ### #
+ *  ### # #
+ *      # #        Hungry LLC 
+ *      ###        IOS Swift Application
+ *                      v1 1/5/2018
+ *      ###        John Peurifoy
  */
 
 import UIKit
 import Material
 import FontAwesome_swift
+import GoogleMaps
+import CoreLocation
+import AddressBookUI
 
-class ViewController_2ndScreen: UIViewController {
-    fileprivate var card: PresenterCard!
-    fileprivate var card2: Card!
-    fileprivate var card3: Card!
-    //Question is what do we need:
-    //var text: 
-    //var text: Int!
-    //var 
 
-    var text: String!
+class ViewController_2ndScreen: UIViewController, UIGestureRecognizerDelegate  {
+   
+    // Utility Variables for swiping
 
-    var phoneNum: String!
-    var foodName: String!
-    var locationName: String!
-    var addressName: String!
-    var foodCost: String!
+    var myConnector: BackendConnector! // Backend Connector for REST API as well as variable container for between views. 
 
-    var foodPic: UIImage!
+    // UI Variables 
 
-    var originalPoint: CGPoint?
-    
-    enum Direction {
-        case None
-        case Right
-        case Left
-        case Up
-        case Down
-    }
-    
-    
     /// Conent area.
-    fileprivate var presenterView: UIImageView!
-    fileprivate var contentView: UILabel!
-    
-    fileprivate var wholeView: View!
-    fileprivate var botView: View!
-    
+    fileprivate var mapView: GMSMapView? // The map
+    fileprivate var costLabel: UILabel! // For cost
+    fileprivate var timeLabel: UILabel! // For Time
     
     /// Bottom Bar views.
-    fileprivate var bottomBar: Bar!
-    fileprivate var dateFormatter: DateFormatter!
-    fileprivate var dateLabel: UILabel!
-    fileprivate var dateLabel2: UILabel!
-    fileprivate var dateLabel3: UILabel!
-    fileprivate var dateLabel4: UILabel!
-    fileprivate var dateLabel5: UILabel!
-    
-    fileprivate var dateLabel6: UILabel!
-    fileprivate var dateLabel7: UILabel!
-    
-    fileprivate var favoriteButton: IconButton!
-    fileprivate var shareButton: IconButton!
-
+    fileprivate var bottomBar: Bar! // Bar for very bottom. 
+    fileprivate var blankLabel: UILabel! // For blank in top right.
+    fileprivate var rideLabel: UILabel! // For the get a ride. 
+    fileprivate var boxLabel: UILabel! //For the Box thing
+    fileprivate var deliverLabel: UILabel! // Deliver label
     
     /// Toolbar views.
-    fileprivate var toolbar: Toolbar!
-    fileprivate var moreButton: IconButton!
+    fileprivate var toolbar: Toolbar! // Top toolbar for rest/food name
+
+    fileprivate var card: Card! // Main card
+    fileprivate var botCard: Card! // Bottom card/menu
+    fileprivate var topCard: Card! // Top card/menu
     
-    internal fileprivate(set) var leftPanGesture: UIPanGestureRecognizer?
+    // Variables 
+
+    var originalPoint: CGPoint?
+    var heightOfScreen: Double!
+
+    // Event Handlers 
+    
+    internal fileprivate(set) var leftPanGesture: UIPanGestureRecognizer? // Swiping
+
+    internal fileprivate(set) var tapGesture: UITapGestureRecognizer? // Taping the map
+
+    internal fileprivate(set) var tapGestureCall: UITapGestureRecognizer? // Tapping Call
     
     override var prefersStatusBarHidden: Bool {
         return true
@@ -98,72 +62,34 @@ class ViewController_2ndScreen: UIViewController {
     
     open override func viewDidLoad() {
         super.viewDidLoad()
+
+        // Initialization of Variables
         
-        //view.backgroundColor = Color.grey.lighten5
-        print("running")
+        heightOfScreen = Double(UIScreen.main.bounds.height)
+        
         view.backgroundColor = UIColor(patternImage: UIImage(named: "Background_Pic_new.png")!);
         
-        prepareDateLabel2()
-        
-        preparePresenterView()
-        prepareDateFormatter()
-        prepareDateLabel()
-        print("through dateLabel")
-        //prepareFavoriteButton()
-        //prepareShareButton()
-        //prepareMoreButton()
+        prepareblankLabel()
         prepareToolbar()
-        print("through toolbar")
-        prepareContentView()
-        //prepareBottomBar()
+        prepareBottomBar()
         preparePresenterCard()
-        print("through presenter card")
         prepareTopMenu()
-        print("through top menu")
         prepareBotMenu()
-        print("through menus")
-        
+
         originalPoint = card.center
-        print("locked center")
-        newCard()
-        //contentView.text = text;
-        contentView.text = phoneNum + "                         " + foodCost;
-        toolbar.title = foodName;
-        toolbar.detail = "          " + addressName;
-        //self.presenterView.image = foodPic;
-
-
+        toolbar.title = myConnector.curCard.descrip;
+        toolbar.detail = "          " + myConnector.curCard.restName;
+        costLabel.text=String(myConnector.curCard.cost)
         
-    }
-}
-
-extension ViewController_2ndScreen {
-    fileprivate func preparePresenterView() {
-        presenterView = UIImageView()
-        presenterView.image = UIImage(named: "pattern")?.resize(toWidth: view.width)
-        presenterView.contentMode = .scaleAspectFill
     }
     
-    fileprivate func prepareDateFormatter() {
-        dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .none
-    }
-    fileprivate func prepareDateLabel() {
-        dateLabel = UILabel()
-        dateLabel.font = UIFont(name: "Thonburi", size: 14.0)
-        dateLabel.textColor = Color.blueGrey.base
-        dateLabel.textAlignment = .center
-        dateLabel.text = "3.2 miles"
-    }
-    fileprivate func prepareDateLabel2() {
-        dateLabel2 = UILabel()
-        dateLabel2.font = UIFont(name: "Thonburi", size: 14.0)
-        //dateLabel2.font = UbuntuFont.bold(with: 20)
-        dateLabel2.textColor = Color.white
-        dateLabel2.textAlignment = .center
-        dateLabel2.text = ""
-        view.layout(dateLabel2).top(5).left(20).right(20)
+    fileprivate func prepareblankLabel() {
+        blankLabel = UILabel()
+        blankLabel.font = UIFont(name: "Thonburi", size: 14.0)
+        blankLabel.textColor = Color.white
+        blankLabel.textAlignment = .center
+        blankLabel.text = ""
+        view.layout(blankLabel).top(5).left(20).right(20)
     }
     
     
@@ -173,28 +99,46 @@ extension ViewController_2ndScreen {
         toolbar.title = "Bacon Cheese Burger"
         toolbar.titleLabel.textAlignment = .left
         toolbar.titleLabel.font = UIFont(name: "Thonburi", size: 20.0)
-        
         toolbar.detail = "      Arby's"
         toolbar.detailLabel.textAlignment = .left
         toolbar.detailLabel.font = UIFont(name: "Thonburi", size: 14.0)
-        
         toolbar.detailLabel.textColor = Color.blueGrey.base
     }
     
-    fileprivate func prepareContentView() {
-        contentView = UILabel()
-        contentView.numberOfLines = 1
-        contentView.text = "417-693-4622"
-        contentView.font = UIFont(name: "Thonburi", size: 14.0);
-    }
-    
+   
     fileprivate func prepareBottomBar() {
-        bottomBar = Bar(centerViews: [dateLabel])
+
+        bottomBar = Bar()
+        timeLabel = UILabel()
+        timeLabel.numberOfLines = 1
+        timeLabel.text = String(self.myConnector.curCard.restTime) + " mins"
+        timeLabel.textAlignment = .center;
+        timeLabel.font = UIFont(name: "Thonburi", size: 14.0);
+        costLabel = UILabel()
+        costLabel.numberOfLines = 1
+        costLabel.text = "Right"
+        costLabel.font = UIFont(name: "Thonburi", size: 14.0);
+
+        let backImage = UIImage.fontAwesomeIcon(code: "fa-phone", textColor: UIColor.blue, size: CGSize(width: 30, height: 30))
+        
+        let iconBackImage = IconButton(image: backImage)
+
+        tapGestureCall = UITapGestureRecognizer(target: self, action: #selector(buttonTapPhone))
+        
+        tapGestureCall?.delegate = self
+        
+        iconBackImage.addGestureRecognizer(tapGestureCall!)
+        iconBackImage.isUserInteractionEnabled = true
+
+        bottomBar.leftViews = [iconBackImage]
+        bottomBar.centerViews = [timeLabel]
+        bottomBar.rightViews = [costLabel]
+        
+        bottomBar.contentView.cornerRadiusPreset = .cornerRadius4
+
     }
     
     func dragged(gestureRecognizer: UIPanGestureRecognizer) {
-        print("Default triggered for GestureRecognizer");
-        //contentView.text="fat cow";
         let distance = gestureRecognizer.translation(in: card);
         switch gestureRecognizer.state {
             
@@ -208,21 +152,16 @@ extension ViewController_2ndScreen {
                 card.transform = CGAffineTransform(rotationAngle: rotationAngle)
                 card.center = CGPoint(x:originalPoint!.x + distance.x,y: originalPoint!.y + distance.y)
             case .ended:
-                //var newDirection: Direction
-                //newDirection = distance < 0 ? .Left : .Right
                 if abs(distance.x) > card.width/4 {
                     print("Swipping the optin!");
                     swipeDirection(s: distance.x > 0 ? .Right : .Left)
                 } else if abs(distance.y) > card.height/4 {
                     print("Swipping up");
                     swipeDirection(s: distance.y > 0 ? .Down : .Up)
-
-                    
                 } else {
                     resetViewPositionAndTransformations()
                 }
             default:
-                //print("Default triggered for GestureRecognizer")
                 break
         }
     }
@@ -231,66 +170,25 @@ extension ViewController_2ndScreen {
         if s == .None {
             return
         }
-        var parentWidth = view.frame.size.width
-        if (s == .Left) {
-            //Go Back
-            present(ViewController(), animated: true)
-        } else if (s == .Right) {
-            //No idea
-            resetViewPositionAndTransformations();
-            //present(ViewController(), animated: true)
-            
-        } else if (s == .Up) {
-            //order it, have a popup come up and then say thank you.
-            let myScreen = ViewController_Buy()
-            myScreen.phoneNum = self.phoneNum;
-            myScreen.foodName = self.foodName;
-            myScreen.locationName = self.locationName;
-            myScreen.addressName = self.locationName;
-            myScreen.foodCost = self.foodCost;
-            myScreen.foodPic = self.foodPic;
-
+        if s == .Left {
+            let myScreen = ViewController();
+            myScreen.myConnector = self.myConnector;
             present(myScreen, animated: true)
-
+            //Because it will nuke it. 
+            myScreen.myConnector = self.myConnector;
+            myScreen.newCard()
             
-        } else {
-            //ignore this
-            resetViewPositionAndTransformations();
-            //present(ViewController(), animated: true)
+        }
+        if s == .Right {
+            resetViewPositionAndTransformations()
+        }
+        if (s == .Up) {
+            
+            let myScreen = ViewController_Buy();
+            myScreen.myConnector = self.myConnector;
+            present(myScreen, animated: true)
         }
     }
-    
-    func swipedRight() {
-        //Reload the card.
-        newCard();
-    }
-    
-    func swipedLeft() {
-        //Reload the card.
-        newCard();
-    }
-    func newCard() {
-        let myNum = Int(arc4random_uniform(4) + 1);
-        
-        dateLabel.text = "Testing";//"4.5 miles"
-        toolbar.title = "Bacon Cheese Burger";
-        toolbar.detail = "         Red Lobster";
-        contentView.text = "417-693-4622                        $14.03";//" $8.13 + Tax \n\n 3000 Calories"
-        //lastly, the picture.
-        presenterView.image = UIImage(named: "map.png")?.resize(toWidth: view.width)
-        //Insert the other stuff whenever we get connection back.
-        
-        
-        //presenterView.image = UIImage(named: "pattern")?.resize(toWidth: view.width)
-        
-        UIView.animate(withDuration: 0.01, animations: { () -> Void in
-            self.card.center = self.originalPoint!
-            self.card.transform = CGAffineTransform(rotationAngle: 0)
-        })
-        
-        
-    }
-    
     
     private func resetViewPositionAndTransformations() {
         UIView.animate(withDuration: 0.2, animations: { () -> Void in
@@ -298,95 +196,172 @@ extension ViewController_2ndScreen {
             self.card.transform = CGAffineTransform(rotationAngle: 0)
         })
     }
+
+    /*
+    * Tap the map
+    */
     
-    func preparePresenterCard() {
+    func buttonTapped(sender: UITapGestureRecognizer) {
+        let curLat = self.myConnector.curLoc.latitude
+        let curLng = self.myConnector.curLoc.longitude
+        let latPos = self.myConnector.curCard.restPos.latitude
+        let longPos = self.myConnector.curCard.restPos.longitude
+        if (sender.state == .ended) {
+            let directionsURL = "http://maps.apple.com/?saddr=" + "\(String(curLat))"+"," + "\(String(curLng))"+"&daddr="+"\(String(latPos))"+","+"\(String(longPos))";
+            guard let url = URL(string: directionsURL) else {
+                return
+            }
+            if #available(iOS 10.0, *) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            } else {
+                UIApplication.shared.openURL(url)
+            }
+            
+        }
         
-        wholeView = View()
+    }
+
+    /*
+    * Tap the call
+    */
     
+
+    func buttonTapPhone(sender: UITapGestureRecognizer) {
+        let phoneNumber = self.myConnector.curCard.restNumber
+        if let url = URL(string: "telprompt:\(phoneNumber)") {
+          if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.openURL(url)
+          }
+        }
+    }
+
+    /*
+    * Tap the back button. 
+    */
+
+    func buttonSwipe(sender: UITapGestureRecognizer) {
+        present(ViewController(), animated: true)
+    }
+
+
+
+
+    func preparePresenterCard() {
+
         //Create Card
-        card = PresenterCard()
+
+        card = Card()
         card.toolbar = toolbar
         card.toolbarEdgeInsetsPreset = .wideRectangle2
-        card.presenterView = presenterView
-        card.contentView = contentView
-        card.contentViewEdgeInsetsPreset = .square3
+        card.contentViewEdgeInsetsPreset = .square3        
+        card.cornerRadiusPreset = .cornerRadius4
+        leftPanGesture = UIPanGestureRecognizer(target: self, action: #selector(dragged))
+        view.addGestureRecognizer(leftPanGesture!)
+        let curLat = self.myConnector.curLoc.latitude
+        let curLng = self.myConnector.curLoc.longitude
+        let latPos = self.myConnector.curCard.restPos.latitude
+        let longPos = self.myConnector.curCard.restPos.longitude
+
+        let camPosLat = (curLat+latPos)/2.0
+        let camPosLong = (curLng + longPos)/2.0
+
+        let mapSize = heightOfScreen - 350.0
+
+        mapView = GMSMapView.map(withFrame: CGRect(x: 0, y: 0, width: mapSize, height: mapSize), camera: GMSCameraPosition.camera(withLatitude: camPosLat, longitude: camPosLong, zoom: 10.5))
+
+        mapView?.settings.scrollGestures = false
+        mapView?.settings.zoomGestures = false
+
+        mapView?.isMyLocationEnabled = true
+
+
+        let smarker = GMSMarker()
+        print("Placing markers....")
+        smarker.position = CLLocationCoordinate2D(latitude: curLat, longitude: curLng)
+        smarker.title = "Lavale"
+        smarker.snippet = "Maharshtra"
+        smarker.map = mapView
+
+        let dmarker = GMSMarker()
+        dmarker.position = CLLocationCoordinate2D(latitude: latPos, longitude: longPos)
+        dmarker.title = "restaurant"
+        dmarker.snippet = "rest"
+        dmarker.map = mapView
+
+
+        tapGesture = UITapGestureRecognizer(target: self, action: #selector(buttonTapped))
+        
+        tapGesture?.delegate = self
+        
+        mapView?.addGestureRecognizer(tapGesture!)
+        mapView?.settings.setAllGesturesEnabled(false)
+        
+        card.contentView = mapView
+        card.contentView?.isUserInteractionEnabled = true
+
         card.bottomBar = bottomBar
         card.bottomBarEdgeInsetsPreset = .wideRectangle2
-        
-        print("Attaching gesture recognizer!");
-        //contentView.text="round 1";
-        wholeView.layout(card).horizontally().center();
-        leftPanGesture = UIPanGestureRecognizer(target: self, action: #selector(dragged))
-        
-        view.addGestureRecognizer(leftPanGesture!)
-        view.layout(wholeView).horizontally(left:20,right:20).center()
+        card.isUserInteractionEnabled = true
+
+        view.layout(card).horizontally(left: 20, right: 20).center().top(60).bottom(40)
+
     }
 
     fileprivate func prepareTopMenu() {
         //***TopCard
-        card3 = Card()
-        card3.bottomBar = Bar()
-        card3.bottomBar?.backgroundColor = Color.lightGreen.base
-        dateLabel7 = UILabel()
-        dateLabel7.text = "Deliver"
+        topCard = Card()
+        topCard.bottomBar = Bar()
+        topCard.bottomBar?.backgroundColor = Color.lightGreen.base
+        deliverLabel = UILabel()
+        deliverLabel.text = "Deliver"
         let deliverImage = UIImage.fontAwesomeIcon(code: "fa-arrow-up", textColor: UIColor.black, size: CGSize(width: 30, height: 30))
 
-        card3.bottomBar?.leftViews = [IconButton(image: deliverImage, tintColor: Color.red.base)]
-        card3.bottomBar?.rightViews = [dateLabel7]
+        topCard.bottomBar?.leftViews = [IconButton(image: deliverImage, tintColor: Color.red.base)]
+        topCard.bottomBar?.rightViews = [deliverLabel]
+        topCard.cornerRadiusPreset = .cornerRadius4
         
-        view.layout(card3).top(30).horizontally(left: 20, right: 20)//.height(50).center()
+        view.layout(topCard).top(30).horizontally(left: 20, right: 20).height(30)//.height(50).center()
     }
 
     fileprivate func prepareBotMenu() {
         
-        //***Bottom Part
-        botView = View();
-        
         //Now add each one.
-        dateLabel2 = UILabel()
-        dateLabel2.numberOfLines = 1
-        dateLabel2.text = "Back"
-        dateLabel3 = UILabel()
-        dateLabel3.numberOfLines = 1
-        dateLabel3.text = "Ride"
-        dateLabel4 = UILabel()
-        dateLabel4.text = "Box"
-        dateLabel5 = UILabel()
-        dateLabel5.text = ">"
+        let notLongLabel = UILabel()
+        notLongLabel.numberOfLines = 1
+        notLongLabel.text = "Hungry? Not for long"
+        notLongLabel.font = UIFont(name: "Arial", size: 17)
+
+        rideLabel = UILabel()
+        rideLabel.numberOfLines = 1
+        rideLabel.text = "Ride"
+        rideLabel.text = ""
+        boxLabel = UILabel()
+        boxLabel.text = "Box"
         
-        card2 = Card()
-        card2.bottomBar = Bar()
+        botCard = Card()
+        botCard.bottomBar = Bar()
         let backImage = UIImage.fontAwesomeIcon(code: "fa-angle-double-left", textColor: UIColor.black, size: CGSize(width: 30, height: 30))
+
+        let iconBackImage = IconButton(image: backImage)
+
+        tapGestureCall = UITapGestureRecognizer(target: self, action: #selector(buttonSwipe))
+        
+        tapGestureCall?.delegate = self
+        
+        iconBackImage.addGestureRecognizer(tapGestureCall!)
+        iconBackImage.isUserInteractionEnabled = true
+
         let rideImage = UIImage.fontAwesomeIcon(name: .automobile, textColor: UIColor.black, size: CGSize(width: 30, height: 30))
 
-        card2.bottomBar?.centerViews = [IconButton(image: backImage),dateLabel2]
-        card2.bottomBar?.leftViews = [IconButton(image: rideImage, tintColor: Color.red.base),dateLabel3]
-        card2.bottomBar?.rightViews = [IconButton(image: Icon.star, tintColor: Color.red.base),dateLabel4]
-        view.layout(card2).bottom().horizontally(left: 20, right: 20).height(100)//.center()
+        botCard.bottomBar?.leftViews = [rideLabel,iconBackImage]
+        botCard.bottomBar?.rightViews = [notLongLabel,rideLabel]
+        //For Beta Comment out these lines. 
+        //botCard.bottomBar?.leftViews = [IconButton(image: rideImage, tintColor: Color.red.base),rideLabel]
+        //botCard.bottomBar?.rightViews = [IconButton(image: Icon.star, tintColor: Color.red.base),boxLabel]
+        botCard.cornerRadiusPreset = .cornerRadius4
+
+        view.layout(botCard).bottom().horizontally(left: 20, right: 20).height(100)//.center()
 
     }
-    
-    
-/*
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let button = UIButton(frame: CGRectMake(100, 80, 30, 30))
-        button.backgroundColor = UIColor.redColor()
-        button.addTarget(self, action: #selector(pressed(_:)), forControlEvents: .TouchUpInside)
-        self.view.addSubview(button)
-    }
-    
-    func pressed(sender: UIButton) { //As ozgur says, ditch the !, it is not needed here :)
-        print("button pressed")
-    }
- */
-}
-
-extension ViewController_2ndScreen {
-    
-    //fileprivate func handleNextButton() {
-    //    navigationController?.pushViewController(TransitionViewController(), animated: true)
-    //}
 }
 

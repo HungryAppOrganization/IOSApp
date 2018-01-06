@@ -19,6 +19,9 @@
 		BB3DADE81F8055E400B0F65B /* Background_Pic_new.png in Resources */ = {isa = PBXBuildFile; fileRef = BB3DADE71F8055E400B0F65B /* Background_Pic_new.png */; };
 		BB3DADEB1F805C9D00B0F65B /* Ubuntu-R.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BB3DADE91F805C9D00B0F65B /* Ubuntu-R.ttf */; };
 		BB3DADEC1F805C9D00B0F65B /* Ubuntu-B.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BB3DADEA1F805C9D00B0F65B /* Ubuntu-B.ttf */; };
+		BB79B19E2001710400B4E20B /* Hungry_Logo.png in Resources */ = {isa = PBXBuildFile; fileRef = BB79B19D2001710300B4E20B /* Hungry_Logo.png */; };
+		BB79B1A0200193EB00B4E20B /* APIKeys.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB79B19F200193EB00B4E20B /* APIKeys.plist */; };
+		BBA29D251FFE967200ED29A0 /* BackendConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA29D241FFE967100ED29A0 /* BackendConnector.swift */; };
 		BBBD76F41FA6F48E002B3529 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BBBD76F31FA6F48E002B3529 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
@@ -52,6 +55,9 @@
 		BB3DADE71F8055E400B0F65B /* Background_Pic_new.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Background_Pic_new.png; sourceTree = SOURCE_ROOT; };
 		BB3DADE91F805C9D00B0F65B /* Ubuntu-R.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Ubuntu-R.ttf"; sourceTree = SOURCE_ROOT; };
 		BB3DADEA1F805C9D00B0F65B /* Ubuntu-B.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Ubuntu-B.ttf"; sourceTree = SOURCE_ROOT; };
+		BB79B19D2001710300B4E20B /* Hungry_Logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Hungry_Logo.png; sourceTree = "<group>"; };
+		BB79B19F200193EB00B4E20B /* APIKeys.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = APIKeys.plist; sourceTree = "<group>"; };
+		BBA29D241FFE967100ED29A0 /* BackendConnector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackendConnector.swift; sourceTree = "<group>"; };
 		BBBD76F31FA6F48E002B3529 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -79,10 +85,12 @@
 		9631A7D71D95F08000CFB109 = {
 			isa = PBXGroup;
 			children = (
+				BB79B19D2001710300B4E20B /* Hungry_Logo.png */,
 				BBBD76F31FA6F48E002B3529 /* GoogleService-Info.plist */,
 				BB3DADE51F8053B100B0F65B /* baconcheeseburger.jpg */,
 				BB28CCE11F991CAE00BF69EC /* map.png */,
 				BB3DADE71F8055E400B0F65B /* Background_Pic_new.png */,
+				BB79B19F200193EB00B4E20B /* APIKeys.plist */,
 				BB3DADEA1F805C9D00B0F65B /* Ubuntu-B.ttf */,
 				BB3DADE91F805C9D00B0F65B /* Ubuntu-R.ttf */,
 				9631A7E21D95F08000CFB109 /* PresenterCard */,
@@ -103,6 +111,7 @@
 		9631A7E21D95F08000CFB109 /* PresenterCard */ = {
 			isa = PBXGroup;
 			children = (
+				BBA29D241FFE967100ED29A0 /* BackendConnector.swift */,
 				BB28CCDD1F98351D00BF69EC /* ViewController_2ndScreen.swift */,
 				9631A7E31D95F08000CFB109 /* AppDelegate.swift */,
 				9631A7E51D95F08000CFB109 /* ViewController.swift */,
@@ -186,6 +195,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB79B19E2001710400B4E20B /* Hungry_Logo.png in Resources */,
+				BB79B1A0200193EB00B4E20B /* APIKeys.plist in Resources */,
 				BB28CCE21F991CAE00BF69EC /* map.png in Resources */,
 				BB3DADEC1F805C9D00B0F65B /* Ubuntu-B.ttf in Resources */,
 				BBBD76F41FA6F48E002B3529 /* GoogleService-Info.plist in Resources */,
@@ -224,9 +235,12 @@
 			files = (
 			);
 			inputPaths = (
+				"${SRCROOT}/Pods/Target Support Files/Pods-PresenterCard/Pods-PresenterCard-resources.sh",
+				"${PODS_ROOT}/GoogleMaps/Maps/Frameworks/GoogleMaps.framework/Resources/GoogleMaps.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -240,6 +254,7 @@
 			);
 			inputPaths = (
 				"${SRCROOT}/Pods/Target Support Files/Pods-PresenterCard/Pods-PresenterCard-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Alamofire/Alamofire.framework",
 				"${BUILT_PRODUCTS_DIR}/FontAwesome.swift/FontAwesome_swift.framework",
 				"${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework",
 				"${BUILT_PRODUCTS_DIR}/GoogleToolboxForMac/GoogleToolboxForMac.framework",
@@ -249,6 +264,7 @@
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Alamofire.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FontAwesome_swift.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GTMSessionFetcher.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/GoogleToolboxForMac.framework",
@@ -268,6 +284,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBA29D251FFE967200ED29A0 /* BackendConnector.swift in Sources */,
 				9631A7E61D95F08000CFB109 /* ViewController.swift in Sources */,
 				BB28CCE01F983A2A00BF69EC /* ViewController_Buy.swift in Sources */,
 				BB28CCDE1F98351D00BF69EC /* ViewController_2ndScreen.swift in Sources */,

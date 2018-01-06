@@ -1,87 +1,45 @@
 /*
- * Copyright (C) 2015 - 2017, Daniel Dahan and CosmicMind, Inc. <http://cosmicmind.com>.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *	*	Redistributions of source code must retain the above copyright notice, this
- *		list of conditions and the following disclaimer.
- *
- *	*	Redistributions in binary form must reproduce the above copyright notice,
- *		this list of conditions and the following disclaimer in the documentation
- *		and/or other materials provided with the distribution.
- *
- *	*	Neither the name of CosmicMind nor the names of its
- *		contributors may be used to endorse or promote products derived from
- *		this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *  #######
+ *  # ### #
+ *  ### # #
+ *      # #        Hungry LLC 
+ *      ###        IOS Swift Application
+ *                      v1 1/5/2018
+ *      ###        John Peurifoy
  */
 
 import UIKit
 import Material
 import Firebase
+import CoreLocation
 
+class ViewController: UIViewController, CLLocationManagerDelegate {
+    
+    // Utility Variables for swiping
 
+    var myConnector: BackendConnector! // Backend Connector for REST API as well as variable container for between views. 
+    
+    var locationManager: CLLocationManager! // Location Manager
 
-var ref: DatabaseReference!
-var storage: Storage!
+    // UI Variables
 
-class ViewController: UIViewController {
-    fileprivate var card: PresenterCard!
-    enum Direction {
-        case None
-        case Right
-        case Left
-        case Up
-        case Down
-    }
+    fileprivate var cardWrapperView: View! // Wrapper for the card. 
+
+    fileprivate var card: PresenterCard! // Main Card
     
+    fileprivate var presenterView: UIImageView! // Center of the Card
+
+    fileprivate var detailsView: UILabel! // Bottom Bar (above distance)
     
-    /// Conent area.
-    fileprivate var presenterView: UIImageView!
-    fileprivate var contentView: UILabel!
+    fileprivate var bottomBar: Bar! // Bottom Bar with distance.
     
-    fileprivate var wholeView: View!
-    
-    /// Bottom Bar views.
-    fileprivate var bottomBar: Bar!
-    fileprivate var dateFormatter: DateFormatter!
-    fileprivate var dateLabel: UILabel!
-    fileprivate var dateLabel2: UILabel!
-    fileprivate var favoriteButton: IconButton!
-    fileprivate var shareButton: IconButton!
+    fileprivate var distanceLabel: UILabel! // Distance Label
+
+    fileprivate var toolbar: Toolbar!
+
     var originalPoint: CGPoint?
-    var myCost: String!
-
-
-    var curCard: NSDictionary!
-    var nextCard: NSDictionary!
-
-    
-    var nextrefImage: UIImage!
-    
-    var cardNum: Double!
-    
-    var myInts = [Int]()
-
-    var ref: DatabaseReference!
-    
-
 
     /// Toolbar views.
-    fileprivate var toolbar: Toolbar!
-    fileprivate var moreButton: IconButton!
     
     internal fileprivate(set) var leftPanGesture: UIPanGestureRecognizer?
     
@@ -91,28 +49,30 @@ class ViewController: UIViewController {
     
     open override func viewDidLoad() {
         super.viewDidLoad()
+
+        // Initialization of Variables
+        self.myConnector = BackendConnector()
+        self.myConnector.initialize()
+        // Create Cards
         
-        
-        
-        //view.backgroundColor = Color.grey.lighten5
+        locationManager = CLLocationManager()
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+
+        // UI Setup
+
         view.backgroundColor = UIColor(patternImage: UIImage(named: "Background_Pic_new.png")!);
-        
-        prepareDateLabel2()
-        
+
+        preparedistanceLabel()
         preparePresenterView()
-        prepareDateFormatter()
-        prepareDateLabel()
-        //prepareFavoriteButton()
-        //prepareShareButton()
-        //prepareMoreButton()
         prepareToolbar()
-        prepareContentView()
+        preparedetailsView()
         prepareBottomBar()
         preparePresenterCard()
         originalPoint = card.center
-        self.cardNum = 0;
-        storage = Storage.storage()
-        ref = Database.database().reference()
+
+        // Transition in to start. 
+        
         self.card.alpha = 0.0
         UIView.animate(withDuration: 0.5 , delay: 1.0, animations: { () -> Void in
             self.card.alpha = 1.0
@@ -120,99 +80,291 @@ class ViewController: UIViewController {
             self.card.transform = CGAffineTransform(rotationAngle: 0)
         })
         
+        // And do the next card. 
         
         newCard()
         
         
         
     }
-}
+    /*
+    * This method sets and returns the lat/lng positions. 
+    * Address is address to get the lat/lng of. immed is if it should update the immedaite card, or if it should just do the next card. 
+    */
 
-extension ViewController {
+    func forwardGeocoding(address: String,immed: Bool){
+        
+        CLGeocoder().geocodeAddressString(address, completionHandler: { (placemarks, error) in
+            if error != nil {
+                print(error)
+                return
+            }
+            if placemarks!.count > 0 {
+                let placemark = placemarks?[0]
+                let coordinate = (placemark?.location)?.coordinate
+                let deliverTime = self.getDistance(x1: Float(coordinate!.latitude),y1:Float(coordinate!.longitude),x2: Float(self.myConnector.curLoc.latitude),y2: Float(self.myConnector.curLoc.longitude))
+                if (immed) {
+                    self.myConnector.curCard.restPos = coordinate!
+                    self.myConnector.curCard.restTime = deliverTime
+                } else {
+                    self.myConnector.curCard.restTime = self.myConnector.nxtCard.restTime
+                    self.myConnector.nxtCard.restPos = coordinate!
+                    self.myConnector.nxtCard.restTime = deliverTime
+                }
+                
+            }
+        })
+    }
+
+    /*
+    * Updates and keeps track of the current user position. 
+    */
+
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .authorizedWhenInUse {
+            locationManager.desiredAccuracy = kCLLocationAccuracyBest
+            locationManager.startUpdatingLocation()
+            let locValue: CLLocationCoordinate2D = (manager.location?.coordinate)!
+            self.myConnector.curLoc = locValue
+        }
+    }
+
+
+    /*
+    * Gets the time between two lat/long cordinates. 
+    */
+
+    func getDistance(x1: Float, y1: Float, x2: Float, y2: Float) -> Int {
+        let time = Int(2.0 + ((y1-y2)*(y1-y2) + (x1-x2)*(x1-x2)).squareRoot()*150.0);
+        return time
+    }
+
+    /*
+    * Top Toolbar. 
+    */
+    
+    fileprivate func prepareToolbar() {
+        toolbar = Toolbar()
+        toolbar.title = "Hungry?"
+        toolbar.titleLabel.textAlignment = .left
+        toolbar.titleLabel.font = UIFont(name: "Thonburi", size: 20.0)
+        toolbar.detail = "      "
+        toolbar.detailLabel.textAlignment = .left
+        toolbar.detailLabel.font = UIFont(name: "Thonburi", size: 14.0)
+        toolbar.detailLabel.textColor = Color.blueGrey.base
+    }
+
+    /*
+    * This is where the image is
+    */
+
     fileprivate func preparePresenterView() {
         presenterView = UIImageView()
         presenterView.image = UIImage(named: "pattern")?.resize(toWidth: view.width)
         presenterView.contentMode = .scaleAspectFill
     }
+
+    /*
+    * Bottom to show details
+    */
     
-    fileprivate func prepareDateFormatter() {
-        dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .none
+    fileprivate func preparedetailsView() {
+        detailsView = UILabel()
+        detailsView.numberOfLines = 3
+        detailsView.text = "Swipe \n \n To"
+        detailsView.textAlignment = .center
+        detailsView.textColor = Color.blueGrey.base
+        detailsView.font = UIFont(name: "Thonburi", size: 14.0);
     }
-    fileprivate func prepareDateLabel() {
-        dateLabel = UILabel()
-        dateLabel.font = UIFont(name: "Thonburi", size: 14.0)
-        dateLabel.textColor = Color.blueGrey.base
-        dateLabel.textAlignment = .center
-        dateLabel.text = "3.2 miles"
-    }
-    fileprivate func prepareDateLabel2() {
-        dateLabel2 = UILabel()
-        dateLabel2.font = UIFont(name: "Thonburi", size: 18.0)
-        //dateLabel2.font = UbuntuFont.bold(with: 20)
-        dateLabel2.textColor = Color.white
-        dateLabel2.textAlignment = .center
-        dateLabel2.text = ""
-        view.layout(dateLabel2).top(10).left(20).right(20)
-    }
+
+    /*
+    * Distance label at the bottom. 
+    */
     
-    
-    fileprivate func prepareToolbar() {
-        toolbar = Toolbar()
-        
-        toolbar.title = "Bacon Cheese Burger"
-        toolbar.titleLabel.textAlignment = .left
-        toolbar.titleLabel.font = UIFont(name: "Thonburi", size: 20.0)
-        
-        toolbar.detail = "      Arby's"
-        toolbar.detailLabel.textAlignment = .left
-        toolbar.detailLabel.font = UIFont(name: "Thonburi", size: 14.0)
-        
-        toolbar.detailLabel.textColor = Color.blueGrey.base
+    fileprivate func preparedistanceLabel() {
+        distanceLabel = UILabel()
+        distanceLabel.font = UIFont(name: "Thonburi", size: 14.0)
+        distanceLabel.textColor = Color.blueGrey.base
+        distanceLabel.textAlignment = .center
+        distanceLabel.text = "Continue..."
     }
-    
-    fileprivate func prepareContentView() {
-        contentView = UILabel()
-        contentView.numberOfLines = 3
-        contentView.text = " $6.03 + Tax \n\n 1000 Calories"
-        contentView.font = UIFont(name: "Thonburi", size: 14.0);
-    }
+
+    /*
+    * Bottom Bar
+    */
     
     fileprivate func prepareBottomBar() {
-        bottomBar = Bar(centerViews: [dateLabel])
+        bottomBar = Bar(centerViews: [distanceLabel])
+    }
+
+    /***** Card Initialization Methods *****/
+
+    func populateCard(storage: Storage) {
+
+        // See if all cards have been shown, if so reset this. 
+        if myConnector.cardsShown.count >= 39 {
+            myConnector.cardsShown = [Int]()
+        }
+        
+        if self.myConnector.firstCard {
+            // If the first card, we should pull and populate the immediate card. 
+            self.myConnector.firstCard = false
+
+        } else {
+            detailsView.textColor = Color.black
+            // If it is just a normal card, this is called each time you swipe.  
+            print("Next Card!")
+            // First get the card populated and all. 
+            self.myConnector.curCard = self.myConnector.nxtCard
+            unpackCardToUI(card:self.myConnector.curCard)
+            self.presenterView.image = self.myConnector.curCard.foodImage;
+            // Change address as well 
+
+        }
+
+        //Now pull the next card.
+
+        var myNum2 = 0;
+    
+        while true {
+            myNum2 = Int(arc4random_uniform(40) + 1);
+            if (!myConnector.cardsShown.contains(myNum2)) {
+                myConnector.cardsShown.append(myNum2)
+                break
+            }
+        }
+
+        pullFromDBAndPopulateCard(foodId: myNum2, immed: false)
+
+    }
+
+    /*
+    * This method pulls from the DB and populates the next card with the corresponding information. It also does the second pull to gather the picture for the stored card. 
+    * Note this method has the similar immed feature where it loads this directly onto the display if needed. 
+    */
+
+    func pullFromDBAndPopulateCard(foodId: Int,immed: Bool) {
+        myConnector.ref.child("foods").child(String(foodId)).observeSingleEvent(of: .value, with: { (snapshot) in
+            let value = snapshot.value as? NSDictionary
+            // This unloads the dict and puts everthing into it. 
+            if (immed) {
+                self.myConnector.curCard.unloadDict(dbDict: value!)
+            } else {
+                self.myConnector.nxtCard.unloadDict(dbDict: value!)
+            }
+
+            let imageLink = value!["foodPic"] as? String ?? ""
+            let completeImageLink = "gs://transproject-adc23.appspot.com/HungryLogos/" + imageLink
+            let gsReferenceImage = self.myConnector.storage.reference(forURL: completeImageLink)
+            gsReferenceImage.getData(maxSize: 1 * 1024 * 1024) { data, error in
+                if let error = error {
+                    print("Error pulling")
+                } else {
+                    let image = UIImage(data: data!)?.resize(toWidth:  self.view.width)
+                    if immed {
+                        self.myConnector.curCard.foodImage = image;
+                        self.presenterView.image = image;
+                        
+                    } else {
+                        self.myConnector.nxtCard.foodImage = image;
+                    }
+                    
+                }
+            }
+
+            if (immed) {
+                self.unpackCardToUI(card: self.myConnector.curCard)
+                self.forwardGeocoding(address: self.myConnector.curCard.restAddress,immed: immed)
+            } else {
+                self.forwardGeocoding(address: self.myConnector.nxtCard.restAddress,immed: immed)
+            }
+            
+        }) { (error) in
+            print(error.localizedDescription)
+        }
+    }
+
+    /*
+    * This unpacks a card and populates the current thing
+    */
+
+    func unpackCardToUI(card: CardToPresent) {
+        self.toolbar.title = card.descrip
+        self.toolbar.detail = "       " +  card.restName
+        self.detailsView.text = "" + String(card.cost) + "\n\n" + String(card.cal) + " Calories";
+        self.distanceLabel.text = String(self.myConnector.curCard.restTime) + " mins"
+
+    }
+
+    func newCard() {
+        populateCard(storage: myConnector.storage)
+        resetViewPositionAndTransformations()
     }
     
+    
+    private func resetViewPositionAndTransformations() {
+        UIView.animate(withDuration: 0.5, animations: { () -> Void in
+            self.card.center = self.originalPoint!
+            self.card.transform = CGAffineTransform(rotationAngle: 0)
+        })
+    }
+
+    /*
+    * UI Setup
+    */
+    
+    func preparePresenterCard() {
+
+        cardWrapperView = View()
+        card = PresenterCard()
+        card.toolbar = toolbar
+        card.toolbarEdgeInsetsPreset = .wideRectangle2
+        card.presenterView = presenterView        
+        card.contentView = detailsView
+        card.contentViewEdgeInsetsPreset = .square3
+        card.bottomBar = bottomBar
+        card.bottomBarEdgeInsetsPreset = .wideRectangle2
+        card.cornerRadiusPreset = .cornerRadius4
+        cardWrapperView.layout(card).horizontally().center();
+
+        leftPanGesture = UIPanGestureRecognizer(target: self, action: #selector(dragged))
+        view.addGestureRecognizer(leftPanGesture!)
+        view.layout(cardWrapperView).horizontally(left:20,right:20).center()
+    }
+
+    
+    /*********** Event Handlers **********/
+
+    /*
+    * Swiping gesture handling
+    */
+
     func dragged(gestureRecognizer: UIPanGestureRecognizer) {
-        print("Default triggered for GestureRecognizer");
-        //contentView.text="fat cow";
         let distance = gestureRecognizer.translation(in: card);
         switch gestureRecognizer.state {
             
             case .began:
+                // Have a place to come back to.
                 originalPoint = card.center
             
             case .changed:
+                // Handle Swiping
                 let rotationPercentage = min(distance.x/(view.width/2), 1);
                 let rotationAngle = (CGFloat(2*3.14/16)*rotationPercentage);
-                
                 card.transform = CGAffineTransform(rotationAngle: rotationAngle)
                 card.center = CGPoint(x:originalPoint!.x + distance.x,y: originalPoint!.y + distance.y)
             case .ended:
-                //var newDirection: Direction
-                //newDirection = distance < 0 ? .Left : .Right
-                if abs(distance.x) > card.width/4 {
+                // Get the next card. 
+                if abs(distance.x) > card.width/8 {
                     print("Swipping the optin!");
                     swipeDirection(s: distance.x > 0 ? .Right : .Left)
-                } else if abs(distance.y) > card.height/4 {
+                } else if abs(distance.y) > card.height/8 {
                     print("Swipping up");
                     swipeDirection(s: distance.y > 0 ? .Down : .Up)
-                    
                 } else {
                     resetViewPositionAndTransformations()
                 }
             default:
-                //print("Default triggered for GestureRecognizer")
                 break
         }
     }
@@ -223,31 +375,27 @@ extension ViewController {
         }
         var parentWidth = view.frame.size.width
         if (s == .Left || s == .Right) {
+            parentWidth *= 1.2 // Sensitivity to swiping
             if s == .Left {
-                parentWidth *= -1
+                parentWidth *= -1.0
+            } else if s == .Right {
+                parentWidth *= 2.0
             }
             UIView.animate(withDuration: 0.2, animations: {
-                self.card.center.x = self.card.frame.origin.x + parentWidth
+                self.card.center.x = 1.0*(self.card.frame.origin.x + parentWidth)
             }, completion: {
                 success in
                 if s == .Right {
                     self.swipedRight();
-                    //self.resetViewPositionAndTransformations();
                 } else if s == .Left {
                     self.swipedLeft();
-                    //self.resetViewPositionAndTransformations();
                 }
                 
             })
         } else if (s == .Up) {
-            print("Swipe up");
+            
             let myScreen = ViewController_2ndScreen();
-            myScreen.phoneNum = "417-693-4622";
-            myScreen.foodName = toolbar.title;
-            myScreen.locationName = toolbar.detail;
-            myScreen.addressName = toolbar.detail;
-            myScreen.foodCost = myCost;
-            myScreen.foodPic = self.presenterView.image;
+            myScreen.myConnector = self.myConnector;
             present(myScreen, animated: true)
         } else {
             resetViewPositionAndTransformations()
@@ -263,171 +411,8 @@ extension ViewController {
         //Reload the card.
         newCard();
     }
-    func populateCard(storage: Storage) {
-        var myNum = Int(0);
-        if myInts.count >= 39 {
-            myInts = [Int]()
-        }
-        
-        if self.cardNum <= 0 {
-            print("First Card!")
-            //pull the first.
-            while true {
-                myNum = Int(arc4random_uniform(40) + 1);
-                if (!myInts.contains(myNum)) {
-                    myInts.append(myNum)
-                    break
-                }
-            }
-            ref.child("foods").child(String(myNum)).observeSingleEvent(of: .value, with: { (snapshot) in
-                if let value = snapshot.value as? NSDictionary {
-                    self.nextCard = value;
-                    let imageLink = value["foodPic"] as? String ?? ""
-                    let completeImageLink = "gs://transproject-adc23.appspot.com/HungryLogos/" + imageLink
-                    let gsReferenceImage = storage.reference(forURL: completeImageLink)
-                    gsReferenceImage.getData(maxSize: 1 * 1024 * 1024) { data, error in
-                        if let error = error {
-                        } else {
-                            let image = UIImage(data: data!)?.resize(toWidth: self.view.width)
-                            self.presenterView.image = image;
-                            let description = value["description"] as? String ?? ""
-                            let cal = value["calories"] as? String ?? ""
-                            let cost = value["price"] as? String ?? ""
-                            let restName = value["name"] as? String ?? ""
-                            self.toolbar.title = description
-                            self.toolbar.detail = "       " +  restName
-                            self.contentView.text = "" + cost + "\n\n" + cal + " Calories";
-                            self.myCost = cost;
-                        }
-                    }
-                }
-                
-            }) { (error) in
-                print(error.localizedDescription)
-            }
-            self.cardNum = 1;
-        } else {
-            print("Next Card!")
-            let value = nextCard!
-            self.presenterView.image = nextrefImage;
-            
-            let description = value["description"] as? String ?? ""
-            let cal = value["calories"] as? String ?? ""
-            let cost = value["price"] as? String ?? ""
-            let restName = value["name"] as? String ?? ""
-            self.toolbar.title = description
-            self.toolbar.detail = "       " + restName
-            self.contentView.text = "" + cost + "\n\n" + cal + " Calories";
-            self.myCost = cost;
-        }
-
-        //Now pull the next card.
-
-        var myNum2 = 0;
-    
-        while true {
-            myNum2 = Int(arc4random_uniform(40) + 1);
-            if (!myInts.contains(myNum2)) {
-                myInts.append(myNum2)
-                break
-            }
-        }
-
-        ref.child("foods").child(String(myNum2)).observeSingleEvent(of: .value, with: { (snapshot) in
-            let value = snapshot.value as! NSDictionary
-            self.nextCard = value;
-            let imageLink = value["foodPic"] as? String ?? ""
-            let completeImageLink = "gs://transproject-adc23.appspot.com/HungryLogos/" + imageLink
-            let gsReferenceImage = storage.reference(forURL: completeImageLink)
-            gsReferenceImage.getData(maxSize: 1 * 1024 * 1024) { data, error in
-                if let error = error {
-                    print("error")
-                } else {
-                    let image = UIImage(data: data!)?.resize(toWidth: self.view.width)
-                    //self.presenterView.image = image
-                    self.nextrefImage = image;
-                }
-            }
-            
-        }) { (error) in
-            print(error.localizedDescription)
-        }
-    }
 
 
-    func newCard() {
-        populateCard(storage: storage)
-        resetViewPositionAndTransformations()
-    }
-    
-    
-    private func resetViewPositionAndTransformations() {
-        UIView.animate(withDuration: 0.01, animations: { () -> Void in
-            self.card.center = self.originalPoint!
-            self.card.transform = CGAffineTransform(rotationAngle: 0)
-        })
-    }
-    
-    func preparePresenterCard() {
-
-        wholeView = View()
-        
-        
-        
-        card = PresenterCard()
-        
-        card.toolbar = toolbar
-        card.toolbarEdgeInsetsPreset = .wideRectangle2
-        
-        card.presenterView = presenterView
-        
-        card.contentView = contentView
-        card.contentViewEdgeInsetsPreset = .square3
-        
-        card.bottomBar = bottomBar
-        card.bottomBarEdgeInsetsPreset = .wideRectangle2
-        print("Attaching gesture recognizer!");
-        //contentView.text="round 1";
-        wholeView.layout(card).horizontally().center();
-        //wholeView.addTarget(self,action: #selector(dragged))
-        //fabButton.addTarget(self, action: #selector(handleNextButton), for: .touchUpInside)
-        
-        //wholeView.addGestureRecognizer(UIPanGestureRecognizer(target: wholeView, action: #selector(dragged)))
-        
-        //wholeView!.delegate = self
-        //wholeView!.cancelsTouchesInView = false
-        
-        leftPanGesture = UIPanGestureRecognizer(target: self, action: #selector(dragged))
-        //leftPanGesture?.delegate = self
-        //leftPanGesture!.cancelsTouchesInView = false
-        view.addGestureRecognizer(leftPanGesture!)
-        
-        
-        
-        view.layout(wholeView).horizontally(left:20,right:20).center()
-    }
-    
-    
-/*
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let button = UIButton(frame: CGRectMake(100, 80, 30, 30))
-        button.backgroundColor = UIColor.redColor()
-        button.addTarget(self, action: #selector(pressed(_:)), forControlEvents: .TouchUpInside)
-        self.view.addSubview(button)
-    }
-    
-    func pressed(sender: UIButton) { //As ozgur says, ditch the !, it is not needed here :)
-        print("button pressed")
-    }
- */
 }
 
-extension ViewController {
-    
-    //fileprivate func handleNextButton() {
-    //    navigationController?.pushViewController(TransitionViewController(), animated: true)
-    //}
-}
 

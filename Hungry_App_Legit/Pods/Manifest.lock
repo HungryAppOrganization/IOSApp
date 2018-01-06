@@ -1,4 +1,5 @@
 PODS:
+  - Alamofire (4.5.1)
   - Firebase/Core (4.2.0):
     - FirebaseAnalytics (= 4.0.3)
     - FirebaseCore (= 4.0.7)
@@ -26,6 +27,11 @@ PODS:
     - FirebaseCore (~> 4.0)
     - GTMSessionFetcher/Core (~> 1.1)
   - FontAwesome.swift (1.2.0)
+  - GoogleMaps (2.4.0):
+    - GoogleMaps/Maps (= 2.4.0)
+  - GoogleMaps/Base (2.4.0)
+  - GoogleMaps/Maps (2.4.0):
+    - GoogleMaps/Base
   - GoogleToolboxForMac/Defines (2.1.1)
   - GoogleToolboxForMac/NSData+zlib (2.1.1):
     - GoogleToolboxForMac/Defines (= 2.1.1)
@@ -41,13 +47,16 @@ PODS:
   - nanopb/encode (0.3.8)
 
 DEPENDENCIES:
+  - Alamofire
   - Firebase/Core
   - Firebase/Database
   - Firebase/Storage
   - FontAwesome.swift
+  - GoogleMaps
   - Material (~> 2.0)
 
 SPEC CHECKSUMS:
+  Alamofire: 2d95912bf4c34f164fdfc335872e8c312acaea4a
   Firebase: 9548cae14d69718add12d75a5b312893f7ef89c7
   FirebaseAnalytics: 76f754d37ca5b04f36856729b6af3ca0152d1069
   FirebaseCore: 9a6cc1e3eaf75905390f9220596ad4fd8f92faee
@@ -55,12 +64,13 @@ SPEC CHECKSUMS:
   FirebaseInstanceID: a4fc702b5a026f7322964376047f1a3f1f7cc6ff
   FirebaseStorage: 0cca42d9b889a0227c3a50121f45a4469fc9eb27
   FontAwesome.swift: 60063e3f19ba4801155d4b0f2334ab7585763ab3
+  GoogleMaps: 8436ab5d1c25e36915b2f7416d0c8e3fa2e76c61
   GoogleToolboxForMac: 8e329f1b599f2512c6b10676d45736bcc2cbbeb0
   GTMSessionFetcher: 5ad62e8200fa00ed011fe5e08d27fef72c5b1429
   leveldb-library: 10fb39c39e243db4af1828441162405bbcec1404
   Material: 8265a77332acfb7872a7fd0f4f2023f080d25d1f
   nanopb: 5601e6bca2dbf1ed831b519092ec110f66982ca3
 
-PODFILE CHECKSUM: 1b33a36c9f84f9ae92458506bcaf98b9c47ad539
+PODFILE CHECKSUM: b5be93a3dd0e693ea4b728fd4bdc24effd67ffd5
 
 COCOAPODS: 1.3.1
